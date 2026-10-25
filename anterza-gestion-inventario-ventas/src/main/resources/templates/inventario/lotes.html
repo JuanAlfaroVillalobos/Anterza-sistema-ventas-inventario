@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lotes - FarmaControl</title>
+    <th:block th:replace="~{fragments/layout :: recursos}"></th:block>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div th:replace="~{fragments/layout :: sidebar(seccion='inventario')}"></div>
+
+<!-- Contenido principal -->
+<main class="fc-main">
+    <div class="container-fluid p-4">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="#" class="text-decoration-none">FarmaControl</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/inventario}" class="text-decoration-none">Inventario</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Lotes</li>
+            </ol>
+        </nav>
+
+        <a th:href="@{/inventario}" class="btn btn-outline-secondary btn-sm mb-3">
+            <i class="bi bi-arrow-left me-1"></i> Regresar a Inventario
+        </a>
+
+        <h4 class="fw-bold mb-1">
+            Lotes de: <span th:text="${producto.nombre}" class="text-danger"></span>
+        </h4>
+        <p class="text-muted small mb-4">
+            Código: <span th:text="${producto.codigo}"></span>
+        </p>
+
+        <!-- Tabla de lotes -->
+        <div class="card shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-muted small fw-semibold">Código Lote</th>
+                            <th class="text-muted small fw-semibold">Fecha Vencimiento</th>
+                            <th class="text-muted small fw-semibold">Días restantes</th>
+                            <th class="text-muted small fw-semibold">Cantidad</th>
+                            <th class="text-muted small fw-semibold">Costo Unitario</th>
+                            <th class="text-muted small fw-semibold">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="l : ${lotes}">
+                            <td class="small" th:text="${l.codigoLote}"></td>
+                            <td class="small" th:text="${#temporals.format(l.fechaVencimiento, 'dd/MM/yyyy')}"></td>
+                            <td class="small">
+                                <span th:with="dias=${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), l.fechaVencimiento)}"
+                                      th:text="${dias} + ' días'"
+                                      th:classappend="${dias < 30 ? 'text-danger fw-bold' : (dias < 90 ? 'text-warning fw-bold' : '')}">
+                                </span>
+                            </td>
+                            <td class="small" th:text="${l.cantidad} + ' u.'"></td>
+                            <td class="small" th:text="'S/ ' + ${#numbers.formatDecimal(l.costoUnitario, 1, 2)}"></td>
+                            <td>
+                                <!-- Vencido -->
+                                <span th:if="${l.fechaVencimiento.isBefore(T(java.time.LocalDate).now())}"
+                                      class="badge bg-danger fw-normal">Vencido</span>
+                                <!-- Próximo a vencer (menos de 3 meses) -->
+                                <span th:if="${!l.fechaVencimiento.isBefore(T(java.time.LocalDate).now()) and l.fechaVencimiento.isBefore(T(java.time.LocalDate).now().plusMonths(3))}"
+                                      class="badge bg-warning text-dark fw-normal">Próximo a vencer</span>
+                                <!-- Vigente -->
+                                <span th:if="${!l.fechaVencimiento.isBefore(T(java.time.LocalDate).now().plusMonths(3))}"
+                                      class="badge bg-success fw-normal">Vigente</span>
+                            </td>
+                        </tr>
+                        <!-- Sin lotes -->
+                        <tr th:if="${#lists.isEmpty(lotes)}">
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                Este producto no tiene lotes registrados.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- Bootstrap JS -->
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+</body>
+</html>

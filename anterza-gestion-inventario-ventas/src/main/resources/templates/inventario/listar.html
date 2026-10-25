@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario - FarmaControl</title>
+    <th:block th:replace="~{fragments/layout :: recursos}"></th:block>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div th:replace="~{fragments/layout :: sidebar(seccion='inventario')}"></div>
+
+<!-- Contenido principal -->
+<main class="fc-main">
+    <div class="container-fluid p-4">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="#" class="text-decoration-none">FarmaControl</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Inventario</li>
+            </ol>
+        </nav>
+
+        <h4 class="fw-bold mb-1">Inventario de productos</h4>
+        <p class="text-muted small mb-4">Gestiona y consulta el stock de tus productos, lotes y alertas</p>
+
+        <!-- Mensaje de éxito -->
+        <div th:if="${msgExito}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-1"></i> <span th:text="${msgExito}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- ==================== BARRA DE FILTROS (Fig. 9) ==================== -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body py-3">
+                <form th:action="@{/inventario}" method="get" class="row g-2 align-items-end">
+                    <!-- Buscar producto -->
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Buscar producto</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" name="buscar" class="form-control"
+                                   placeholder="Nombre del producto..."
+                                   th:value="${buscar}">
+                        </div>
+                    </div>
+                    <!-- Categoría -->
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1">Categoría</label>
+                        <select name="categoriaId" class="form-select form-select-sm">
+                            <option value="">Todas</option>
+                            <option th:each="c : ${categorias}"
+                                    th:value="${c.idCategoria}"
+                                    th:text="${c.nombre}"
+                                    th:selected="${categoriaId != null and categoriaId == c.idCategoria}">
+                            </option>
+                        </select>
+                    </div>
+                    <!-- Botones -->
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-sm btn-dark">
+                            <i class="bi bi-funnel me-1"></i> Filtrar
+                        </button>
+                        <a th:href="@{/inventario}" class="btn btn-sm btn-outline-secondary ms-1">Limpiar</a>
+                    </div>
+                    <!-- Registrar producto (Fig. 9) -->
+                    <div class="col-md-5 text-end">
+                        <a th:href="@{/inventario/nuevo}" class="btn btn-sm btn-danger">
+                            <i class="bi bi-plus-lg me-1"></i> Registrar producto
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ==================== TABLA DE PRODUCTOS (Fig. 9) ==================== -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-muted small fw-semibold">Código</th>
+                            <th class="text-muted small fw-semibold">Producto</th>
+                            <th class="text-muted small fw-semibold">Categoría</th>
+                            <th class="text-muted small fw-semibold">Lote</th>
+                            <th class="text-muted small fw-semibold">Fecha de vencimiento</th>
+                            <th class="text-muted small fw-semibold">Stock actual</th>
+                            <th class="text-muted small fw-semibold">Estado</th>
+                            <th class="text-muted small fw-semibold">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${productos}">
+                            <td class="small" th:text="${p.codigo}"></td>
+                            <td class="small" th:text="${p.nombre}"></td>
+                            <td class="small" th:text="${p.categoria.nombre}"></td>
+                            <!-- Lote (primer lote del producto) -->
+                            <td class="small">
+                                <span th:if="${primerLote.containsKey(p.idProducto)}"
+                                      th:text="${primerLote.get(p.idProducto).codigoLote}"></span>
+                                <span th:unless="${primerLote.containsKey(p.idProducto)}"
+                                      class="text-muted">—</span>
+                            </td>
+                            <!-- Fecha vencimiento (del primer lote) -->
+                            <td class="small">
+                                <span th:if="${primerLote.containsKey(p.idProducto)}"
+                                      th:text="${#temporals.format(primerLote.get(p.idProducto).fechaVencimiento, 'dd/MM/yyyy')}"></span>
+                                <span th:unless="${primerLote.containsKey(p.idProducto)}"
+                                      class="text-muted">—</span>
+                            </td>
+                            <!-- Stock actual -->
+                            <td class="small" th:text="${p.stockActual != null ? p.stockActual : 0}"></td>
+                            <!-- Estado -->
+                            <td>
+                                <span th:if="${p.stockActual != null and p.stockActual == 0}"
+                                      class="badge bg-danger fw-normal">Agotado</span>
+                                <span th:if="${p.stockActual != null and p.stockActual > 0 and p.stockActual <= p.stockMinimo}"
+                                      class="badge bg-warning text-dark fw-normal">Stock bajo</span>
+                                <span th:if="${p.stockActual != null and p.stockActual > p.stockMinimo}"
+                                      class="badge bg-success fw-normal">Disponible</span>
+                                <span th:if="${p.stockActual == null}"
+                                      class="badge bg-secondary fw-normal">Sin lotes</span>
+                            </td>
+                            <!-- Acciones -->
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{/inventario/lotes/{id}(id=${p.idProducto})}"
+                                       class="btn btn-outline-secondary" title="Ver lotes">
+                                        <i class="bi bi-boxes"></i>
+                                    </a>
+                                    <a th:href="@{/inventario/editar/{id}(id=${p.idProducto})}"
+                                       class="btn btn-outline-primary" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a th:href="@{/inventario/eliminar/{id}(id=${p.idProducto})}"
+                                       class="btn btn-outline-danger" title="Eliminar"
+                                       onclick="return confirm('¿Estás seguro de eliminar este producto?')">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Sin datos -->
+                        <tr th:if="${#lists.isEmpty(productos)}">
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No se encontraron productos.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ==================== RESUMEN DE ALERTAS (Fig. 9 inferior) ==================== -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="bi bi-bell me-1"></i> Resumen de alertas</h6>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#fff3cd;">
+                            <i class="bi bi-exclamation-triangle fs-4 text-warning"></i>
+                            <div>
+                                <h5 class="fw-bold mb-0" th:text="${proximosVencer}">0</h5>
+                                <small class="text-muted">Productos próximos a vencer</small>
+                            </div>
+                            <a th:href="@{/inventario/alertas/vencimiento}" class="btn btn-sm btn-outline-warning ms-auto">Ver detalle</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#f8d7da;">
+                            <i class="bi bi-box-seam fs-4 text-danger"></i>
+                            <div>
+                                <h5 class="fw-bold mb-0" th:text="${productosStockBajo}">0</h5>
+                                <small class="text-muted">Productos con bajo stock</small>
+                            </div>
+                            <a th:href="@{/inventario/alertas/stock}" class="btn btn-sm btn-outline-danger ms-auto">Ver detalle</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Botón modal (Fig. 9) -->
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#modalAlertas">
+                        <i class="bi bi-bell me-1"></i> Ver todas las alertas
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- ==================== MODAL: Alertas de inventario (Fig. 10) ==================== -->
+<div class="modal fade" id="modalAlertas" tabindex="-1" aria-labelledby="modalAlertasLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="modalAlertasLabel">
+                    <i class="bi bi-bell me-1"></i> Alertas de inventario
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Sección 1: Productos próximos a vencer -->
+                <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle text-warning me-1"></i> Productos próximos a vencer</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="small">Producto</th>
+                                <th class="small">Lote</th>
+                                <th class="small">Fecha vencimiento</th>
+                                <th class="small">Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="l : ${lotesProximosVencer}">
+                                <td class="small" th:text="${l.producto.nombre}"></td>
+                                <td class="small" th:text="${l.codigoLote}"></td>
+                                <td class="small" th:text="${#temporals.format(l.fechaVencimiento, 'dd/MM/yyyy')}"></td>
+                                <td class="small" th:text="${l.cantidad}"></td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(lotesProximosVencer)}">
+                                <td colspan="4" class="text-center text-muted small py-3">Sin alertas</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <a th:href="@{/inventario/alertas/vencimiento}" class="btn btn-sm btn-outline-warning mb-4">
+                    <i class="bi bi-arrow-right me-1"></i> Ver detalle
+                </a>
+
+                <!-- Sección 2: Productos con bajo stock -->
+                <h6 class="fw-bold mb-2"><i class="bi bi-box-seam text-danger me-1"></i> Productos con bajo stock</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="small">Producto</th>
+                                <th class="small">Código</th>
+                                <th class="small">Stock actual</th>
+                                <th class="small">Mínimo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="p : ${productosStockBajoList}">
+                                <td class="small" th:text="${p.nombre}"></td>
+                                <td class="small" th:text="${p.codigo}"></td>
+                                <td class="small fw-bold text-danger" th:text="${p.stockActual}"></td>
+                                <td class="small" th:text="${p.stockMinimo}"></td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(productosStockBajoList)}">
+                                <td colspan="4" class="text-center text-muted small py-3">Sin alertas</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <a th:href="@{/inventario/alertas/stock}" class="btn btn-sm btn-outline-danger mt-3">
+                    <i class="bi bi-arrow-right me-1"></i> Ver detalle
+                </a>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+</body>
+</html>
