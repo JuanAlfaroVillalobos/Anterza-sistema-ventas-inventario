@@ -8,21 +8,14 @@
     <style>
         .btn-teal { background: #1a838b; color: #fff; border: none; }
         .btn-teal:hover { background: #0e4c5c; color: #fff; }
-        .table > thead { background: #f1f5f9; }
-        .card-vencidos {
-            background: linear-gradient(135deg, #e11d48, #be123c);
-            color: #fff; border-radius: .75rem;
-        }
-        .card-proximos {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #fff; border-radius: .75rem;
-        }
-        .badge-vencido { background: #fee2e2; color: #991b1b; }
-        .badge-proximo { background: #fef3c7; color: #92400e; }
-        .stat-icon {
-            width: 48px; height: 48px; border-radius: .5rem;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,.2); font-size: 1.4rem;
+        .badge-vencido  { background: #fee2e2; color: #991b1b; }
+        .badge-proximo  { background: #fef3c7; color: #92400e; }
+        .table > thead  { background: #f1f5f9; }
+        .filter-btn { border-radius: 2rem; font-size: .85rem; }
+        .filter-btn.active { background: #1a838b; color: #fff; border-color: #1a838b; }
+        .section-title {
+            font-size: .95rem; font-weight: 600;
+            display: flex; align-items: center; gap: .5rem;
         }
     </style>
 </head>
@@ -41,147 +34,113 @@
                     <h4 class="fw-bold mb-0">
                         <i class="bi bi-clock-history me-2 text-warning"></i>Alertas de Vencimiento
                     </h4>
-                    <small class="text-muted">Control de lotes próximos a vencer y vencidos</small>
-                </div>
-            </div>
-
-            <!-- Tarjetas resumen -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <div class="card card-vencidos p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <small class="opacity-75">Lotes Vencidos</small>
-                                <h3 class="fw-bold mb-0" th:text="${#lists.size(lotesVencidos)}">0</h3>
-                            </div>
-                            <div class="stat-icon"><i class="bi bi-x-octagon"></i></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card card-proximos p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <small class="opacity-75">Próximos a Vencer</small>
-                                <h3 class="fw-bold mb-0" th:text="${#lists.size(lotesProximos)}">0</h3>
-                            </div>
-                            <div class="stat-icon"><i class="bi bi-clock"></i></div>
-                        </div>
-                    </div>
+                    <small class="text-muted">Lotes próximos a vencer y lotes vencidos</small>
                 </div>
             </div>
 
             <!-- Filtro de días -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body py-3">
-                    <form th:action="@{/inventario/alertas/vencimiento}" method="get"
-                          class="row g-2 align-items-end">
-                        <div class="col-md-4">
-                            <label class="form-label small text-muted mb-1">Anticipación (días)</label>
-                            <select name="dias" class="form-select">
-                                <option value="7"  th:selected="${diasSeleccionados == 7}">7 días</option>
-                                <option value="15" th:selected="${diasSeleccionados == 15}">15 días</option>
-                                <option value="30" th:selected="${diasSeleccionados == 30}">30 días</option>
-                                <option value="60" th:selected="${diasSeleccionados == 60}">60 días</option>
-                                <option value="90" th:selected="${diasSeleccionados == 90}">90 días</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-teal w-100">
-                                <i class="bi bi-funnel me-1"></i> Filtrar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Tabla Lotes Vencidos -->
-            <div class="card border-0 shadow-sm mb-4" th:if="${!#lists.isEmpty(lotesVencidos)}">
-                <div class="card-header bg-danger bg-opacity-10 border-0">
-                    <h6 class="mb-0 text-danger fw-bold">
-                        <i class="bi bi-x-octagon me-1"></i> Lotes Vencidos
-                    </h6>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="ps-3">Código Lote</th>
-                                    <th>Producto</th>
-                                    <th>Categoría</th>
-                                    <th>Fecha Vencimiento</th>
-                                    <th class="text-center">Cantidad</th>
-                                    <th class="text-center pe-3">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="l : ${lotesVencidos}">
-                                    <td class="ps-3 fw-semibold" th:text="${l.codigoLote}"></td>
-                                    <td th:text="${l.producto.nombre}"></td>
-                                    <td>
-                                        <span class="badge bg-light text-dark"
-                                              th:text="${l.producto.categoria.nombre}"></span>
-                                    </td>
-                                    <td th:text="${#temporals.format(l.fechaVencimiento, 'dd/MM/yyyy')}"></td>
-                                    <td class="text-center" th:text="${l.cantidad}"></td>
-                                    <td class="text-center pe-3">
-                                        <span class="badge rounded-pill badge-vencido">
-                                            <i class="bi bi-x-circle me-1"></i>Vencido
-                                        </span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <span class="text-muted small me-2">Mostrar lotes que vencen en:</span>
+                    <div class="btn-group" role="group">
+                        <a th:each="d : ${new int[]{7, 15, 30, 60, 90}}"
+                           th:href="@{/inventario/alertas/vencimiento(dias=${d})}"
+                           class="btn btn-outline-secondary filter-btn"
+                           th:classappend="${diasSeleccionados == d ? ' active' : ''}"
+                           th:text="${d + ' días'}">30 días</a>
                     </div>
                 </div>
             </div>
 
-            <!-- Tabla Próximos a Vencer -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-warning bg-opacity-10 border-0">
-                    <h6 class="mb-0 text-warning fw-bold">
-                        <i class="bi bi-clock me-1"></i> Próximos a Vencer
-                        <span class="text-muted fw-normal" th:text="'(dentro de ' + ${diasSeleccionados} + ' días)'"></span>
-                    </h6>
+            <!-- Lotes VENCIDOS -->
+            <div th:if="${!#lists.isEmpty(lotesVencidos)}" class="mb-4">
+                <div class="section-title text-danger mb-3">
+                    <i class="bi bi-x-octagon-fill"></i> Lotes Vencidos
+                    <span class="badge bg-danger ms-1" th:text="${#lists.size(lotesVencidos)}"></span>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="ps-3">Código Lote</th>
-                                    <th>Producto</th>
-                                    <th>Categoría</th>
-                                    <th>Fecha Vencimiento</th>
-                                    <th class="text-center">Cantidad</th>
-                                    <th class="text-center pe-3">Días Restantes</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="l : ${lotesProximos}">
-                                    <td class="ps-3 fw-semibold" th:text="${l.codigoLote}"></td>
-                                    <td th:text="${l.producto.nombre}"></td>
-                                    <td>
-                                        <span class="badge bg-light text-dark"
-                                              th:text="${l.producto.categoria.nombre}"></span>
-                                    </td>
-                                    <td th:text="${#temporals.format(l.fechaVencimiento, 'dd/MM/yyyy')}"></td>
-                                    <td class="text-center" th:text="${l.cantidad}"></td>
-                                    <td class="text-center pe-3">
-                                        <span class="badge rounded-pill badge-proximo"
-                                              th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), l.fechaVencimiento)} + ' días'">
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr th:if="${#lists.isEmpty(lotesProximos)}">
-                                    <td colspan="6" class="text-center text-muted py-4">
-                                        <i class="bi bi-check-circle fs-3 d-block mb-2 text-success"></i>
-                                        No hay lotes próximos a vencer en este período.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-3">Producto</th>
+                                        <th>Categoría</th>
+                                        <th>Código Lote</th>
+                                        <th>Fecha Vencimiento</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-center pe-3">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="l : ${lotesVencidos}">
+                                        <td class="ps-3 fw-semibold" th:text="${l.producto.nombre}"></td>
+                                        <td>
+                                            <span class="badge bg-light text-dark"
+                                                  th:text="${l.producto.categoria.nombre}"></span>
+                                        </td>
+                                        <td th:text="${l.codigoLote}"></td>
+                                        <td th:text="${#temporals.format(l.fechaVencimiento, 'dd/MM/yyyy')}"></td>
+                                        <td class="text-center" th:text="${l.cantidad}"></td>
+                                        <td class="text-center pe-3">
+                                            <span class="badge rounded-pill badge-vencido">
+                                                <i class="bi bi-x-circle me-1"></i>Vencido
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lotes PRÓXIMOS A VENCER -->
+            <div class="mb-4">
+                <div class="section-title text-warning mb-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Próximos a Vencer
+                    <span class="badge bg-warning text-dark ms-1"
+                          th:text="${#lists.size(lotesProximos)}"></span>
+                </div>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-3">Producto</th>
+                                        <th>Categoría</th>
+                                        <th>Código Lote</th>
+                                        <th>Fecha Vencimiento</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-center pe-3">Días Restantes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="l : ${lotesProximos}">
+                                        <td class="ps-3 fw-semibold" th:text="${l.producto.nombre}"></td>
+                                        <td>
+                                            <span class="badge bg-light text-dark"
+                                                  th:text="${l.producto.categoria.nombre}"></span>
+                                        </td>
+                                        <td th:text="${l.codigoLote}"></td>
+                                        <td th:text="${#temporals.format(l.fechaVencimiento, 'dd/MM/yyyy')}"></td>
+                                        <td class="text-center" th:text="${l.cantidad}"></td>
+                                        <td class="text-center pe-3">
+                                            <span class="badge rounded-pill badge-proximo"
+                                                  th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), l.fechaVencimiento) + ' días'}">
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(lotesProximos)}">
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="bi bi-check-circle fs-3 d-block mb-2 text-success"></i>
+                                            No hay lotes próximos a vencer en este período.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
