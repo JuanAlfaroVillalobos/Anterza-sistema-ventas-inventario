@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Producto - FarmaControl</title>
+    <th:block th:replace="~{fragments/layout :: recursos}"></th:block>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div th:replace="~{fragments/layout :: sidebar(seccion='inventario')}"></div>
+
+<!-- Contenido principal -->
+<main class="fc-main">
+    <div class="container-fluid p-4">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="#" class="text-decoration-none">FarmaControl</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/inventario}" class="text-decoration-none">Inventario</a></li>
+                <li class="breadcrumb-item active" aria-current="page"
+                    th:text="${producto.idProducto != null ? 'Editar producto' : 'Nuevo producto'}"></li>
+            </ol>
+        </nav>
+
+        <a th:href="@{/inventario}" class="btn btn-outline-secondary btn-sm mb-3">
+            <i class="bi bi-arrow-left me-1"></i> Regresar a Inventario
+        </a>
+
+        <h4 class="fw-bold mb-4"
+            th:text="${producto.idProducto != null ? 'Editar producto' : 'Registrar nuevo producto'}"></h4>
+
+        <!-- Formulario -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form th:action="@{/inventario/guardar}" th:object="${producto}" method="post">
+
+                    <!-- ID oculto para edición -->
+                    <input type="hidden" th:field="*{idProducto}">
+
+                    <div class="row g-3">
+                        <!-- Código -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Código <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" th:field="*{codigo}"
+                                   placeholder="Ej: PROD-001" required maxlength="20">
+                        </div>
+                        <!-- Nombre -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Nombre del producto <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" th:field="*{nombre}"
+                                   placeholder="Ej: Paracetamol 500mg" required maxlength="80">
+                        </div>
+                        <!-- Categoría -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Categoría <span class="text-danger">*</span></label>
+                            <select class="form-select" th:field="*{categoria.idCategoria}" required>
+                                <option value="">Seleccionar categoría</option>
+                                <option th:each="c : ${categorias}"
+                                        th:value="${c.idCategoria}"
+                                        th:text="${c.nombre}">
+                                </option>
+                            </select>
+                        </div>
+                        <!-- Precio de venta -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Precio de venta (S/) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" min="0" class="form-control"
+                                   th:field="*{precioVenta}" placeholder="0.00" required>
+                        </div>
+                        <!-- Stock mínimo -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Stock mínimo <span class="text-danger">*</span></label>
+                            <input type="number" min="0" class="form-control"
+                                   th:field="*{stockMinimo}" placeholder="0" required>
+                        </div>
+                        <!-- Activo -->
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       th:field="*{activo}" id="activoSwitch">
+                                <label class="form-check-label small" for="activoSwitch">Producto activo</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span th:text="${producto.idProducto != null ? 'Actualizar' : 'Guardar'}"></span>
+                        </button>
+                        <a th:href="@{/inventario}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- Bootstrap JS -->
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+</body>
+</html>

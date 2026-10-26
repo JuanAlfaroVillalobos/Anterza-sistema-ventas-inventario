@@ -15,6 +15,19 @@ public interface LoteDAO extends JpaRepository<Lote, Integer> {
 
     List<Lote> findByFechaVencimientoBefore(LocalDate fecha);
 
+    List<Lote> findByFechaVencimientoBetween(LocalDate desde, LocalDate hasta);
+
+    long countByFechaVencimientoBetween(LocalDate desde, LocalDate hasta);
+
+    @Query("SELECT l FROM Lote l JOIN FETCH l.producto WHERE l.fechaVencimiento BETWEEN :desde AND :hasta")
+    List<Lote> findLotesProximosConProducto(@Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
+
+    @Query("SELECT l FROM Lote l JOIN FETCH l.producto WHERE l.fechaVencimiento < :fecha")
+    List<Lote> findVencidosConProducto(@Param("fecha") LocalDate fecha);
+
+    @Query("SELECT l FROM Lote l JOIN FETCH l.producto WHERE l.producto.idProducto = :idProducto")
+    List<Lote> findByProductoConProducto(@Param("idProducto") Integer idProducto);
+
     @Query("""
             SELECT l.cantidad - COALESCE(
                 (SELECT SUM(d.cantidad) FROM DetalleVenta d
