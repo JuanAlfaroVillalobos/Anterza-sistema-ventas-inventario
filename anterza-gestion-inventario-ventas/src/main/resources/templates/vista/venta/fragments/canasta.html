@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<body>
+
+<!-- ==================== FRAGMENTO: panel de la canasta ==================== -->
+<div th:fragment="panel" class="card shadow-sm border-0 sticky-xl-top">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">Canasta de Ventas</h5>
+            <span class="badge rounded-pill text-bg-light border fw-normal" id="badgeItems">0 productos</span>
+        </div>
+
+        <div id="canastaVacia" class="text-center text-muted py-4">
+            <i class="bi bi-basket fs-1 d-block mb-2"></i>
+            Aún no agregaste productos.<br>
+            <small>Búscalos a la izquierda y pulsa <strong>Agregar</strong>.</small>
+        </div>
+        <ul id="listaCanasta" class="list-group list-group-flush overflow-y-auto" style="max-height: 40vh;"></ul>
+
+        <hr>
+
+        <!-- Método de pago: lista de opciones -> un botón por cada una (mismo HTML repetido con th:each) -->
+        <div class="small fw-semibold text-muted mb-2">MÉTODO DE PAGO</div>
+        <div class="row g-2" id="grupoPago" role="radiogroup" aria-label="Método de pago">
+            <div class="col-6" th:each="pago : ${metodosPago}">
+                <input type="radio" class="btn-check" name="metodoPago" autocomplete="off"
+                       th:id="${'pago-' + pago.codigo}" th:value="${pago.codigo}">
+                <label class="btn btn-outline-dark btn-sm w-100 py-2" th:for="${'pago-' + pago.codigo}">
+                    <i class="bi me-1" th:classappend="${pago.icono}"></i>
+                    <span th:text="${pago.nombre}">Efectivo</span>
+                </label>
+            </div>
+        </div>
+        <div id="errorPago" class="text-danger small mt-2 d-none">
+            <i class="bi bi-exclamation-circle me-1"></i> Seleccione el método de pago.
+        </div>
+
+        <!-- Código QR: aparece solo al elegir Yape o Plin (imagen en static/img/qr/yape.png o plin.png) -->
+        <div id="panelQr" class="text-center border rounded p-3 mt-3 d-none">
+            <div class="small text-muted mb-2">Escanee para pagar con <strong id="qrMetodo">Yape</strong></div>
+            <img id="qrImagen" src="" alt="Código QR de pago" class="img-fluid w-50 mx-auto d-block">
+            <div id="qrFalta" class="small text-danger d-none">
+                <i class="bi bi-qr-code fs-1 d-block text-muted"></i>
+                Falta la imagen del QR en <code>static/img/qr/</code>
+            </div>
+            <div class="fw-bold mt-2" id="qrMonto">Total: S/ 0.00</div>
+        </div>
+
+        <hr>
+
+        <!-- Totales (los precios ya incluyen IGV) -->
+        <div class="d-flex justify-content-between small mb-1">
+            <span class="text-muted">Subtotal</span>
+            <span class="fw-semibold" id="lblSubtotal">S/ 0.00</span>
+        </div>
+        <div class="d-flex justify-content-between small mb-2">
+            <span class="text-muted">IGV (18%)</span>
+            <span class="fw-semibold" id="lblIgv">S/ 0.00</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center border-top pt-2 mb-3">
+            <span class="fw-bold">Total a cobrar</span>
+            <span class="fs-3 fw-bold" id="lblTotal">S/ 0.00</span>
+        </div>
+
+        <div id="alertaVenta" class="alert d-none py-2 small" role="alert"></div>
+
+        <button type="button" id="btnProcesar" class="btn btn-danger btn-lg w-100 mb-2" disabled>
+            <span class="js-texto"><i class="bi bi-check2-circle me-1"></i> Procesar Venta</span>
+            <span class="js-cargando d-none">
+                <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> Registrando...
+            </span>
+        </button>
+        <button type="button" id="btnCancelar" class="btn btn-outline-secondary w-100">Cancelar</button>
+    </div>
+</div>
+
+
+<!-- ==================== FRAGMENTO: plantilla de una línea de la canasta ====================
+     <template> no se muestra: venta.js la clona por cada producto agregado y solo rellena los textos. -->
+<template th:fragment="plantillaLinea" id="tplLinea">
+    <li class="list-group-item px-0">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+                <div class="fw-semibold small js-nombre"></div>
+                <div class="text-muted small js-precio-unitario"></div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-danger p-0 js-quitar" data-accion="quitar">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+        <div class="row g-2 align-items-center mt-1">
+            <div class="col-7">
+                <div class="input-group input-group-sm">
+                    <button type="button" class="btn btn-outline-secondary js-menos" data-accion="menos"
+                            aria-label="Quitar una unidad">&minus;</button>
+                    <input type="number" class="form-control text-center js-cantidad" min="1"
+                           inputmode="numeric">
+                    <button type="button" class="btn btn-outline-secondary js-mas" data-accion="mas"
+                            aria-label="Agregar una unidad">+</button>
+                </div>
+            </div>
+            <div class="col text-end fw-bold js-importe"></div>
+        </div>
+    </li>
+</template>
+
+
+<!-- ==================== FRAGMENTO: aviso de venta registrada ==================== -->
+<div th:fragment="modalExito" class="modal fade" id="modalVentaOk" tabindex="-1"
+     aria-labelledby="modalVentaOkLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center p-4">
+                <i class="bi bi-check-circle-fill text-success display-3 d-block mb-2"></i>
+                <h5 class="fw-bold mb-1" id="modalVentaOkLabel">Venta registrada</h5>
+                <p class="text-muted small mb-3">Venta N.° <strong id="okNumero">-</strong> · <span id="okPago">-</span></p>
+                <div class="display-6 fw-bold mb-1" id="okTotal">S/ 0.00</div>
+                <small class="text-muted d-block mb-3">Subtotal <span id="okSubtotal">S/ 0.00</span> · IGV <span id="okIgv">S/ 0.00</span></small>
+                <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">
+                    <i class="bi bi-plus-lg me-1"></i> Nueva venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
