@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inventario - FarmaControl</title>
+    <th:block th:replace="~{fragments/layout :: recursos}" />
+    <style>
+        .card-stat {
+            border: none;
+            border-radius: .75rem;
+            color: #fff;
+            transition: transform .15s;
+        }
+        .card-stat:hover { transform: translateY(-3px); }
+        .card-stat .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: .5rem;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,.2);
+            font-size: 1.4rem;
+        }
+        .bg-teal   { background: linear-gradient(135deg, #1a838b, #0e4c5c); }
+        .bg-amber  { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .bg-rose   { background: linear-gradient(135deg, #e11d48, #be123c); }
+        .badge-stock-ok  { background: #d1fae5; color: #065f46; }
+        .badge-stock-low { background: #fee2e2; color: #991b1b; }
+        .table > thead { background: #f1f5f9; }
+        .btn-teal {
+            background: #1a838b; color: #fff; border: none;
+        }
+        .btn-teal:hover { background: #0e4c5c; color: #fff; }
+        .search-box {
+            border-radius: .5rem;
+            border: 1px solid #dee2e6;
+            padding: .45rem .75rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav th:replace="~{fragments/layout :: sidebar('inventario')}"></nav>
+
+    <!-- Contenido principal -->
+    <div class="fc-main">
+        <div class="container-fluid py-4 px-4">
+
+            <!-- Título -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold mb-1">
+                        <i class="bi bi-box-seam me-2 text-primary"></i>Gestión de Inventario
+                    </h4>
+                    <small class="text-muted">Registro, consulta y control de stock de productos</small>
+                </div>
+                <a th:href="@{/inventario/nuevo}" class="btn btn-teal">
+                    <i class="bi bi-plus-lg me-1"></i> Nuevo Producto
+                </a>
+            </div>
+
+            <!-- Tarjetas de resumen -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card card-stat bg-teal p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="opacity-75">Total Productos</small>
+                                <h3 class="fw-bold mb-0" th:text="${totalProductos}">0</h3>
+                            </div>
+                            <div class="stat-icon"><i class="bi bi-capsule"></i></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <a th:href="@{/inventario/alertas/vencimiento}" class="text-decoration-none">
+                        <div class="card card-stat bg-amber p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="opacity-75">Próximos a Vencer</small>
+                                    <h3 class="fw-bold mb-0" th:text="${lotesProxVencer}">0</h3>
+                                </div>
+                                <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a th:href="@{/inventario/alertas/stock}" class="text-decoration-none">
+                        <div class="card card-stat bg-rose p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="opacity-75">Stock Bajo</small>
+                                    <h3 class="fw-bold mb-0" th:text="${productosStockBajo}">0</h3>
+                                </div>
+                                <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Alertas flash -->
+            <div th:if="${exito}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-1"></i> <span th:text="${exito}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-x-circle me-1"></i> <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Filtros y búsqueda -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body py-3">
+                    <form th:action="@{/inventario}" method="get" class="row g-2 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label small text-muted mb-1">Buscar producto</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                <input type="text" name="buscar" class="form-control search-box"
+                                       placeholder="Nombre del producto..."
+                                       th:value="${buscar}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted mb-1">Categoría</label>
+                            <select name="categoria" class="form-select">
+                                <option value="">Todas las categorías</option>
+                                <option th:each="cat : ${categorias}"
+                                        th:value="${cat.idCategoria}"
+                                        th:text="${cat.nombre}"
+                                        th:selected="${categoriaSeleccionada != null && categoriaSeleccionada == cat.idCategoria}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex gap-2">
+                            <button type="submit" class="btn btn-teal flex-grow-1">
+                                <i class="bi bi-funnel me-1"></i> Filtrar
+                            </button>
+                            <a th:href="@{/inventario}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tabla de productos -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-3">Código</th>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th class="text-end">Precio Venta</th>
+                                    <th class="text-center">Stock Actual</th>
+                                    <th class="text-center">Stock Mín.</th>
+                                    <th class="text-center">Estado</th>
+                                    <th class="text-center pe-3">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="p : ${productos}">
+                                    <td class="ps-3 fw-semibold" th:text="${p.codigo}"></td>
+                                    <td th:text="${p.nombre}"></td>
+                                    <td>
+                                        <span class="badge bg-light text-dark"
+                                              th:text="${p.categoria.nombre}"></span>
+                                    </td>
+                                    <td class="text-end" th:text="'S/ ' + ${#numbers.formatDecimal(p.precioVenta, 1, 2)}"></td>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill"
+                                              th:classappend="${p.stockActual != null && p.stockActual < p.stockMinimo ? 'badge-stock-low' : 'badge-stock-ok'}"
+                                              th:text="${p.stockActual != null ? p.stockActual : 0}"></span>
+                                    </td>
+                                    <td class="text-center" th:text="${p.stockMinimo}"></td>
+                                    <td class="text-center">
+                                        <span class="badge"
+                                              th:classappend="${p.activo ? 'bg-success' : 'bg-secondary'}"
+                                              th:text="${p.activo ? 'Activo' : 'Inactivo'}"></span>
+                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="btn-group btn-group-sm">
+                                            <a th:href="@{/inventario/editar/{id}(id=${p.idProducto})}"
+                                               class="btn btn-outline-primary" title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a th:href="@{/inventario/lotes/{id}(id=${p.idProducto})}"
+                                               class="btn btn-outline-info" title="Ver Lotes">
+                                                <i class="bi bi-boxes"></i>
+                                            </a>
+                                            <form th:action="@{/inventario/desactivar/{id}(id=${p.idProducto})}"
+                                                  method="post" class="d-inline"
+                                                  onsubmit="return confirm('¿Desactivar este producto?')">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Desactivar">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(productos)}">
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                        No se encontraron productos.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- container -->
+    </div><!-- fc-main -->
+
+    <th:block th:replace="~{fragments/layout :: scripts}" />
+</body>
+</html>

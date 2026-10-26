@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Alertas de Stock - FarmaControl</title>
+    <th:block th:replace="~{fragments/layout :: recursos}" />
+    <style>
+        .btn-teal { background: #1a838b; color: #fff; border: none; }
+        .btn-teal:hover { background: #0e4c5c; color: #fff; }
+        .table > thead { background: #f1f5f9; }
+        .card-stock-bajo {
+            background: linear-gradient(135deg, #e11d48, #be123c);
+            color: #fff; border-radius: .75rem;
+        }
+        .stat-icon {
+            width: 48px; height: 48px; border-radius: .5rem;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,.2); font-size: 1.4rem;
+        }
+        .progress-stock {
+            height: 8px; border-radius: 4px;
+            background: #e5e7eb;
+        }
+        .progress-stock .progress-bar {
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <nav th:replace="~{fragments/layout :: sidebar('inventario')}"></nav>
+
+    <div class="fc-main">
+        <div class="container-fluid py-4 px-4">
+
+            <!-- Encabezado -->
+            <div class="d-flex align-items-center mb-4">
+                <a th:href="@{/inventario}" class="btn btn-outline-secondary btn-sm me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h4 class="fw-bold mb-0">
+                        <i class="bi bi-exclamation-triangle me-2 text-danger"></i>Alertas de Stock Bajo
+                    </h4>
+                    <small class="text-muted">Productos cuyo stock actual está por debajo del mínimo</small>
+                </div>
+            </div>
+
+            <!-- Tarjeta resumen -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card card-stock-bajo p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="opacity-75">Productos con Stock Bajo</small>
+                                <h3 class="fw-bold mb-0" th:text="${#lists.size(productos)}">0</h3>
+                            </div>
+                            <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger bg-opacity-10 border-0">
+                    <h6 class="mb-0 text-danger fw-bold">
+                        <i class="bi bi-graph-down me-1"></i> Productos por debajo del stock mínimo
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-3">Código</th>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th class="text-center">Stock Actual</th>
+                                    <th class="text-center">Stock Mínimo</th>
+                                    <th>Nivel</th>
+                                    <th class="text-center pe-3">Déficit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="p : ${productos}">
+                                    <td class="ps-3 fw-semibold" th:text="${p.codigo}"></td>
+                                    <td th:text="${p.nombre}"></td>
+                                    <td>
+                                        <span class="badge bg-light text-dark"
+                                              th:text="${p.categoria.nombre}"></span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fw-bold text-danger"
+                                              th:text="${p.stockActual != null ? p.stockActual : 0}"></span>
+                                    </td>
+                                    <td class="text-center" th:text="${p.stockMinimo}"></td>
+                                    <td style="min-width: 120px;">
+                                        <div class="progress progress-stock">
+                                            <div class="progress-bar"
+                                                 th:classappend="${p.stockActual != null && p.stockActual > 0 ? 'bg-warning' : 'bg-danger'}"
+                                                 th:style="'width:' + ${p.stockMinimo > 0 ? (p.stockActual != null ? (p.stockActual * 100 / p.stockMinimo) : 0) : 0} + '%'"
+                                                 role="progressbar"></div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center pe-3">
+                                        <span class="badge bg-danger rounded-pill"
+                                              th:text="'-' + ${p.stockMinimo - (p.stockActual != null ? p.stockActual : 0)}"></span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(productos)}">
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        <i class="bi bi-check-circle fs-3 d-block mb-2 text-success"></i>
+                                        Todos los productos tienen stock suficiente.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/layout :: scripts}" />
+</body>
+</html>

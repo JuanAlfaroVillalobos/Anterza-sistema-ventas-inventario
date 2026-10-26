@@ -44,4 +44,32 @@ public interface LoteDAO extends JpaRepository<Lote, Integer> {
              WHERE l.producto.idProducto = :idProducto
             """)
     Long stockTotalDelProducto(@Param("idProducto") Integer idProducto);
+
+    /** Lotes con JOIN FETCH producto+categoría — evita LazyInitializationException. */
+    @Query("""
+            SELECT l FROM Lote l
+              JOIN FETCH l.producto p
+              JOIN FETCH p.categoria
+             WHERE l.fechaVencimiento BETWEEN CURRENT_DATE AND :fechaLimite
+             ORDER BY l.fechaVencimiento ASC
+            """)
+    List<Lote> listarProximosAVencer(@Param("fechaLimite") LocalDate fechaLimite);
+
+    @Query("""
+            SELECT l FROM Lote l
+              JOIN FETCH l.producto p
+              JOIN FETCH p.categoria
+             WHERE l.fechaVencimiento < CURRENT_DATE
+             ORDER BY l.fechaVencimiento ASC
+            """)
+    List<Lote> listarVencidos();
+
+    @Query("""
+            SELECT l FROM Lote l
+              JOIN FETCH l.producto p
+              JOIN FETCH p.categoria
+             WHERE l.producto.idProducto = :idProducto
+             ORDER BY l.fechaVencimiento ASC
+            """)
+    List<Lote> listarPorProductoConDetalles(@Param("idProducto") Integer idProducto);
 }
