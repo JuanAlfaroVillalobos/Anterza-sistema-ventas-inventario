@@ -1,155 +1,138 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ANTERZA | Registrar Compra</title>
+    <title>Registrar Compra - FarmaControl</title>
+    <th:block th:replace="~{fragments/layout :: recursos}"></th:block>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f2f5f9;
-            color: #1b2c40;
-            margin: 0
-        }
-
-        header {
-            background: #123a65;
-            color: white;
-            padding: 22px 8%
-        }
-
-        main {
-            max-width: 860px;
-            margin: 30px auto;
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 5px 25px #17324b1c
-        }
-
-        h1 {
-            margin: 0 0 8px
-        }
-
-        p {
-            color: #5b6775
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            margin: 8px 0
-        }
-
-        input,
-        select {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 11px;
-            border: 1px solid #cbd5e1;
-            border-radius: 7px
-        }
-
-        button {
-            background: #1469a8;
-            color: white;
-            border: 0;
-            padding: 14px 24px;
-            border-radius: 7px;
-            cursor: pointer;
-            margin-top: 22px
-        }
-
-        .alert {
-            padding: 14px;
-            border-radius: 6px;
-            margin-bottom: 15px
-        }
-
-        .ok {
-            background: #dcfce7
-        }
-
-        .error {
-            background: #fee2e2
-        }
-
-        .total {
-            font-size: 20px;
-            font-weight: bold;
-            text-align: right;
-            margin-top: 18px
-        }
-
-        @media(max-width:640px) {
-            .grid {
-                grid-template-columns: 1fr
-            }
-
-            main {
-                margin: 12px;
-                padding: 18px
-            }
-        }
+        .btn-teal { background:#1a838b; color:white; border:0; }
+        .btn-teal:hover { background:#0e4c5c; color:white; }
+        .compra-card { border:0; border-radius:.75rem; }
+        .compra-card .card-header { background:white; border-bottom:1px solid #edf0f3; }
+        .total-compra { color:#0e4c5c; font-size:1.6rem; font-weight:700; }
     </style>
 </head>
-
 <body>
-    <header><strong>ANTERZA · Gestión de compras</strong></header>
-    <main>
-        <h1>Registrar compra</h1>
-        <p>Ingresa el comprobante y el lote recibido. La compra se guardará en MySQL.</p>
-        <div class="alert ok" th:if="${exito}" th:text="${exito}"></div>
-        <div class="alert error" th:if="${error}" th:text="${error}"></div>
-        <p th:if="${#lists.isEmpty(proveedores) or #lists.isEmpty(empleados) or #lists.isEmpty(productos)}"
-            class="alert error">
-            Antes de registrar, debe existir al menos un proveedor, empleado y producto en MySQL.
-        </p>
-        <form method="post" th:action="@{/compras/registrar}">
-            <div class="grid">
-                <div><label>Proveedor</label><select name="proveedorId" required>
-                        <option value="">Seleccione proveedor</option>
-                        <option th:each="p : ${proveedores}" th:value="${p.idProveedor}" th:text="${p.razonSocial}">
-                        </option>
-                    </select></div>
-                <div><label>Empleado responsable</label><select name="empleadoId" required>
-                        <option value="">Seleccione empleado</option>
-                        <option th:each="e : ${empleados}" th:value="${e.idEmpleado}"
-                            th:text="${e.nombres + ' ' + e.apellidoPaterno}"></option>
-                    </select></div>
-                <div><label>Número de documento</label><input name="documento" maxlength="20" placeholder="F001-000123"
-                        required></div>
-                <div><label>Fecha de compra</label><input name="fecha" type="date" th:value="${hoy}" required></div>
-                <div><label>Producto</label><select name="productoId" required>
-                        <option value="">Seleccione producto</option>
-                        <option th:each="p : ${productos}" th:value="${p.idProducto}" th:text="${p.nombre}"></option>
-                    </select></div>
-                <div><label>Código de lote</label><input name="codigoLote" maxlength="20" placeholder="LOTE-001"
-                        required></div>
-                <div><label>Fecha de vencimiento</label><input name="vencimiento" type="date" required></div>
-                <div><label>Cantidad</label><input id="cantidad" name="cantidad" type="number" min="1" value="1"
-                        required></div>
-                <div><label>Costo unitario (S/)</label><input id="costo" name="costo" type="number" min="0.01"
-                        max="999999.99" step="0.01" value="1.00" required></div>
+    <nav th:replace="~{fragments/layout :: sidebar('compra')}"></nav>
+    <main class="fc-main">
+        <div class="container-fluid py-4 px-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a th:href="@{/inventario}" class="text-decoration-none">FarmaControl</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Registrar Compra</li>
+                </ol>
+            </nav>
+            <h4 class="fw-bold mb-1"><i class="bi bi-cart-plus me-2 text-info"></i>Registrar Compra</h4>
+            <p class="text-muted small mb-4">Registra el comprobante y los productos recibidos para actualizar el inventario.</p>
+
+            <div th:if="${exito}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i><span th:text="${exito}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
             </div>
-            <div class="total">Total: S/ <span id="total">1.00</span></div>
-            <button type="submit">Guardar compra en MySQL</button>
-        </form>
-        <p><small>Esta primera versión registra una compra con un lote de producto. El stock se refleja a través del
-                lote, sin duplicar movimientos.</small></p>
+            <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+            <div th:if="${#lists.isEmpty(proveedores) or #lists.isEmpty(empleados) or #lists.isEmpty(productos)}"
+                 class="alert alert-warning" role="alert">
+                Para registrar una compra necesitas al menos un proveedor, un empleado y un producto disponibles.
+            </div>
+
+            <form method="post" th:action="@{/compras/registrar}" class="row g-4">
+                <section class="col-xl-8">
+                    <div class="card compra-card shadow-sm mb-4">
+                        <div class="card-header px-4 py-3 fw-semibold"><i class="bi bi-receipt me-2 text-info"></i>Datos del comprobante</div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="proveedorId" class="form-label">Proveedor</label>
+                                    <select id="proveedorId" name="proveedorId" class="form-select" required>
+                                        <option value="">Selecciona un proveedor</option>
+                                        <option th:each="p : ${proveedores}" th:value="${p.idProveedor}" th:text="${p.razonSocial}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="empleadoId" class="form-label">Empleado responsable</label>
+                                    <select id="empleadoId" name="empleadoId" class="form-select" required>
+                                        <option value="">Selecciona un empleado</option>
+                                        <option th:each="e : ${empleados}" th:value="${e.idEmpleado}" th:text="${e.nombres + ' ' + e.apellidoPaterno}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="documento" class="form-label">Número de comprobante</label>
+                                    <input id="documento" name="documento" class="form-control" maxlength="20" placeholder="F001-000123" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="fecha" class="form-label">Fecha de compra</label>
+                                    <input id="fecha" name="fecha" type="date" class="form-control" th:value="${hoy}" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card compra-card shadow-sm">
+                        <div class="card-header px-4 py-3 fw-semibold"><i class="bi bi-box-seam me-2 text-info"></i>Producto recibido</div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label for="productoId" class="form-label">Producto</label>
+                                    <select id="productoId" name="productoId" class="form-select" required>
+                                        <option value="">Selecciona un producto</option>
+                                        <option th:each="p : ${productos}" th:value="${p.idProducto}" th:text="${p.nombre}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="codigoLote" class="form-label">Código de lote</label>
+                                    <input id="codigoLote" name="codigoLote" class="form-control" maxlength="20" placeholder="LOTE-001" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="vencimiento" class="form-label">Fecha de vencimiento</label>
+                                    <input id="vencimiento" name="vencimiento" type="date" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cantidad" class="form-label">Cantidad recibida</label>
+                                    <input id="cantidad" name="cantidad" type="number" min="1" value="1" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="costo" class="form-label">Costo unitario (S/)</label>
+                                    <input id="costo" name="costo" type="number" min="0.01" max="999999.99" step="0.01" value="1.00" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <aside class="col-xl-4">
+                    <div class="card compra-card shadow-sm">
+                        <div class="card-header px-4 py-3 fw-semibold">Resumen de compra</div>
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between mb-3"><span class="text-muted">Cantidad</span><span id="cantidadResumen">1 unidad</span></div>
+                            <div class="d-flex justify-content-between mb-3"><span class="text-muted">Costo unitario</span><span id="costoResumen">S/ 1.00</span></div>
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <strong>Total</strong><span class="total-compra">S/ <span id="total">1.00</span></span>
+                            </div>
+                            <button type="submit" class="btn btn-teal w-100 py-2"
+                                    th:disabled="${#lists.isEmpty(proveedores) or #lists.isEmpty(empleados) or #lists.isEmpty(productos)}">
+                                <i class="bi bi-check-circle me-2"></i>Registrar Compra
+                            </button>
+                            <a th:href="@{/inventario}" class="btn btn-outline-secondary w-100 mt-2">Cancelar</a>
+                        </div>
+                    </div>
+                </aside>
+            </form>
+        </div>
     </main>
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
     <script>
-        const cantidad = document.getElementById('cantidad'), costo = document.getElementById('costo'), total = document.getElementById('total');
-        function calcular() { total.textContent = ((+cantidad.value || 0) * (+costo.value || 0)).toFixed(2) }
-        cantidad.addEventListener('input', calcular); costo.addEventListener('input', calcular);
+        const cantidad = document.getElementById('cantidad');
+        const costo = document.getElementById('costo');
+        function actualizarResumen() {
+            const unidades = Number(cantidad.value) || 0;
+            const precio = Number(costo.value) || 0;
+            document.getElementById('cantidadResumen').textContent = unidades + (unidades === 1 ? ' unidad' : ' unidades');
+            document.getElementById('costoResumen').textContent = 'S/ ' + precio.toFixed(2);
+            document.getElementById('total').textContent = (unidades * precio).toFixed(2);
+        }
+        cantidad.addEventListener('input', actualizarResumen);
+        costo.addEventListener('input', actualizarResumen);
+        actualizarResumen();
     </script>
 </body>
-
 </html>

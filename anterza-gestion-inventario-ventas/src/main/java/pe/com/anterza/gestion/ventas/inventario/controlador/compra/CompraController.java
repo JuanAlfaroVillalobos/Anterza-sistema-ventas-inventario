@@ -48,11 +48,11 @@ public class CompraController {
         try {
             var compra = servicio.registrar(proveedorId, empleadoId, documento, fecha,
                 productoId, codigoLote, vencimiento, cantidad, costo);
-            redirect.addFlashAttribute("exito", "Compra #" + compra.getIdCompra() + " registrada en MySQL.");
+            redirect.addFlashAttribute("exito", "Compra #" + compra.getIdCompra() + " registrada correctamente.");
         } catch (IllegalArgumentException ex) {
             redirect.addFlashAttribute("error", ex.getMessage());
         } catch (Exception ex) {
-            redirect.addFlashAttribute("error", "No se pudo guardar. Verifique las tablas y conexión MySQL.");
+            redirect.addFlashAttribute("error", "No se pudo registrar la compra. Inténtelo nuevamente.");
         }
         return "redirect:/compras";
     }
