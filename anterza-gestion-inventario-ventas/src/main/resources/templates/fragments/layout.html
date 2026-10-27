@@ -61,7 +61,7 @@
     <!-- Menú -->
     <ul class="nav flex-column gap-1">
         <li class="nav-item">
-            <a class="nav-link" href="#">
+            <a class="nav-link" th:classappend="${seccion == 'compra' ? 'active' : ''}" th:href="@{/compras}">
                 <i class="bi bi-cart-plus me-2"></i> Registrar Compra
             </a>
         </li>
