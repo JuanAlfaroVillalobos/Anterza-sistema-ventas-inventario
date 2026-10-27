@@ -32,6 +32,8 @@
         qrFalta: $('#qrFalta'),
         qrMetodo: $('#qrMetodo'),
         qrMonto: $('#qrMonto'),
+        tarjetaPanel: $('#panelTarjeta'),
+        tarjetaMonto: $('#tarjetaMonto'),
         subtotal: $('#lblSubtotal'),
         igv: $('#lblIgv'),
         total: $('#lblTotal'),
@@ -216,6 +218,13 @@
 
     /** Yape y Plin muestran su código QR con el total a cobrar; los demás métodos lo ocultan. */
     function actualizarQr() {
+        // Tarjeta: instrucciones para cobrar con el POS y el total
+        const usaTarjeta = state.metodoPago === 'TARJETA';
+        el.tarjetaPanel.classList.toggle('d-none', !usaTarjeta);
+        if (usaTarjeta) {
+            el.tarjetaMonto.textContent = 'Total: ' + dinero(totales().total);
+        }
+
         const usaQr = state.metodoPago === 'YAPE' || state.metodoPago === 'PLIN';
         el.qrPanel.classList.toggle('d-none', !usaQr);
         if (!usaQr) return;

@@ -4,16 +4,12 @@ import java.util.List;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import jakarta.validation.Valid;
 import pe.com.anterza.gestion.ventas.inventario.modelo.Lote;
 import pe.com.anterza.gestion.ventas.inventario.modelo.Producto;
 import pe.com.anterza.gestion.ventas.inventario.servicio.inventario.AlertaInventarioServicio;
@@ -22,7 +18,7 @@ import pe.com.anterza.gestion.ventas.inventario.servicio.inventario.InventarioSe
 
 /**
  * Controlador del módulo de inventario.
- * Maneja: listado, formulario (crear/editar), lotes, alertas de vencimiento y stock bajo.
+ * Maneja: listado (solo consulta), lotes e historial de alertas. Los productos se crean desde Registrar Compra.
  */
 @Controller
 @RequestMapping("/inventario")
@@ -70,71 +66,6 @@ public class InventarioControlador {
         model.addAttribute("alertasStock", alertas.stock());
 
         return "vista/inventario/listar";
-    }
-
-    /* ====================== FORMULARIO (CREAR / EDITAR) ====================== */
-
-    @GetMapping("/nuevo")
-    public String nuevoProducto(Model model) {
-        model.addAttribute("producto", new Producto());
-        model.addAttribute("categorias", servicio.listarCategorias());
-        model.addAttribute("esEdicion", false);
-        return "vista/inventario/formulario";
-    }
-
-    @GetMapping("/editar/{id}")
-    public String editarProducto(@PathVariable Integer id, Model model,
-                                 RedirectAttributes ra) {
-        return servicio.obtenerProductoPorId(id)
-                .map(p -> {
-                    model.addAttribute("producto", p);
-                    model.addAttribute("categorias", servicio.listarCategorias());
-                    model.addAttribute("esEdicion", true);
-                    return "vista/inventario/formulario";
-                })
-                .orElseGet(() -> {
-                    ra.addFlashAttribute("error", "Producto no encontrado.");
-                    return "redirect:/inventario";
-                });
-    }
-
-    @PostMapping("/guardar")
-    public String guardarProducto(@Valid @ModelAttribute("producto") Producto producto,
-                                  BindingResult result,
-                                  Model model,
-                                  RedirectAttributes ra) {
-
-        // Validar código duplicado
-        if (!result.hasFieldErrors("codigo")
-                && servicio.codigoExiste(producto.getCodigo(), producto.getIdProducto())) {
-            result.rejectValue("codigo", "duplicado", "Este código ya está registrado");
-        }
-
-        if (result.hasErrors()) {
-            model.addAttribute("categorias", servicio.listarCategorias());
-            model.addAttribute("esEdicion", producto.getIdProducto() != null);
-            return "vista/inventario/formulario";
-        }
-
-        if (producto.getActivo() == null) {
-            producto.setActivo(true);
-        }
-
-        servicio.guardarProducto(producto);
-        ra.addFlashAttribute("exito",
-                producto.getIdProducto() != null
-                        ? "Producto actualizado correctamente."
-                        : "Producto registrado correctamente.");
-        return "redirect:/inventario";
-    }
-
-    /* ====================== DESACTIVAR PRODUCTO ====================== */
-
-    @PostMapping("/desactivar/{id}")
-    public String desactivar(@PathVariable Integer id, RedirectAttributes ra) {
-        servicio.desactivarProducto(id);
-        ra.addFlashAttribute("exito", "Producto desactivado correctamente.");
-        return "redirect:/inventario";
     }
 
     /* ====================== LOTES DE UN PRODUCTO ====================== */

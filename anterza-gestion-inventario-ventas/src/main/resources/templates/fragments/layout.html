@@ -3,6 +3,9 @@
 
 <!-- ==================== FRAGMENT: recursos (CSS) ==================== -->
 <th:block th:fragment="recursos">
+    <!-- Ícono de la pestaña del navegador (logo de FarmaControl) -->
+    <link rel="icon" type="image/png" th:href="@{/img/favicon.png}">
+    <link rel="apple-touch-icon" th:href="@{/img/favicon.png}">
     <!-- Bootstrap 5.3.2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons 1.11.3 -->
@@ -44,13 +47,61 @@
             background: #f5f6fa;
         }
 
+        /* ---- Responsivo: en pantallas medianas y pequeñas el menú se oculta y se abre con un botón ---- */
+        .fc-toggle,
+        .fc-backdrop {
+            display: none;
+        }
+
         @media (max-width: 991.98px) {
             .fc-sidebar {
-                width: 220px;
+                width: 250px;
+                transform: translateX(-100%);
+                transition: transform .25s ease;
+                box-shadow: none;
+            }
+
+            .fc-sidebar.fc-abierto {
+                transform: translateX(0);
+                box-shadow: 0 0 2rem rgba(0, 0, 0, .35);
             }
 
             .fc-main {
-                margin-left: 220px;
+                margin-left: 0;
+                padding-top: 3.25rem;
+            }
+
+            .fc-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: fixed;
+                top: .6rem;
+                left: .75rem;
+                width: 2.5rem;
+                height: 2.5rem;
+                z-index: 1050;
+                border: 0;
+                border-radius: .5rem;
+                background: #1a838b;
+                color: #fff;
+                font-size: 1.3rem;
+                box-shadow: 0 .15rem .5rem rgba(0, 0, 0, .25);
+            }
+
+            .fc-backdrop.fc-abierto {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 1035;
+                background: rgba(0, 0, 0, .45);
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .fc-main .container-fluid {
+                padding-left: .85rem !important;
+                padding-right: .85rem !important;
             }
         }
     </style>
@@ -120,6 +171,39 @@
 <th:block th:fragment="scripts">
     <!-- Bootstrap 5.3.2 Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Botón de menú para pantallas pequeñas (se crea solo, las páginas no cambian) -->
+    <script>
+        (function () {
+            var menu = document.querySelector('.fc-sidebar');
+            if (!menu) { return; }
+
+            var boton = document.createElement('button');
+            boton.type = 'button';
+            boton.className = 'fc-toggle';
+            boton.setAttribute('aria-label', 'Abrir menú');
+            boton.setAttribute('aria-expanded', 'false');
+            boton.innerHTML = '<i class="bi bi-list"></i>';
+
+            var fondo = document.createElement('div');
+            fondo.className = 'fc-backdrop';
+
+            document.body.appendChild(boton);
+            document.body.appendChild(fondo);
+
+            function abrir(abierto) {
+                menu.classList.toggle('fc-abierto', abierto);
+                fondo.classList.toggle('fc-abierto', abierto);
+                boton.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+                boton.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
+            }
+
+            boton.addEventListener('click', function () { abrir(!menu.classList.contains('fc-abierto')); });
+            fondo.addEventListener('click', function () { abrir(false); });
+            menu.addEventListener('click', function (e) { if (e.target.closest('a')) { abrir(false); } });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { abrir(false); } });
+            window.addEventListener('resize', function () { if (window.innerWidth >= 992) { abrir(false); } });
+        })();
+    </script>
 </th:block>
 
 </html>

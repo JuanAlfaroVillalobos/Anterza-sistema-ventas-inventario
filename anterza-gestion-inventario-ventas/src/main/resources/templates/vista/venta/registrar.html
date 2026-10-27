@@ -7,6 +7,18 @@
     <title>Registrar venta - FarmaControl</title>
     <!-- Bootstrap, Bootstrap Icons y estilos del menú: vienen del layout compartido -->
     <th:block th:replace="~{fragments/layout :: recursos}"></th:block>
+    <style>
+        html { scroll-behavior: smooth; }
+        /* Botón flotante para ir a la canasta cuando está debajo del catálogo (pantallas menores a 1200 px) */
+        #btnVerCanasta { z-index: 1030; }
+        #btnVerCanasta.d-none { display: none !important; }
+
+        /* Cuando la canasta queda debajo del catálogo (menos de 1200 px) se muestran todos los productos
+           de la canasta, sin barra de desplazamiento interna: se baja con el scroll de la página. */
+        @media (max-width: 1199.98px) {
+            #listaCanasta { max-height: none !important; overflow-y: visible !important; }
+        }
+    </style>
 </head>
 <body>
 
@@ -70,12 +82,21 @@
             </section>
 
             <!-- ==================== CANASTA ==================== -->
-            <aside class="col-xl-4" aria-label="Canasta de ventas">
+            <aside class="col-xl-4" id="seccionCanasta" aria-label="Canasta de ventas">
                 <div th:replace="~{vista/venta/fragments/canasta :: panel}"></div>
             </aside>
         </div>
     </div>
 </main>
+
+<!-- Botón flotante: lleva a la canasta y muestra cuántos productos hay y el total -->
+<a href="#seccionCanasta" id="btnVerCanasta"
+   class="btn btn-dark btn-lg shadow rounded-pill position-fixed bottom-0 end-0 m-3 d-xl-none d-flex align-items-center gap-2"
+   aria-label="Ir a la canasta de ventas">
+    <i class="bi bi-basket"></i>
+    <span class="small">Canasta · <span id="flotanteItems">0 productos</span></span>
+    <strong id="flotanteTotal">S/ 0.00</strong>
+</a>
 
 <!-- Plantilla de línea de canasta y aviso de venta registrada -->
 <template th:replace="~{vista/venta/fragments/canasta :: plantillaLinea}"></template>
@@ -84,6 +105,31 @@
 <!-- Bootstrap JS (del layout) y script de la pantalla -->
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 <script th:src="@{/js/venta.js}"></script>
+<script>
+    // Botón flotante de la canasta: copia el conteo y el total, y se oculta cuando la canasta ya se ve
+    (function () {
+        var boton = document.getElementById('btnVerCanasta');
+        var seccion = document.getElementById('seccionCanasta');
+        var badge = document.getElementById('badgeItems');
+        var total = document.getElementById('lblTotal');
+        if (!boton || !seccion || !badge || !total) { return; }
+
+        function sincronizar() {
+            document.getElementById('flotanteItems').textContent = badge.textContent;
+            document.getElementById('flotanteTotal').textContent = total.textContent;
+        }
+        var opciones = { childList: true, characterData: true, subtree: true };
+        new MutationObserver(sincronizar).observe(badge, opciones);
+        new MutationObserver(sincronizar).observe(total, opciones);
+        sincronizar();
+
+        if ('IntersectionObserver' in window) {
+            new IntersectionObserver(function (entradas) {
+                boton.classList.toggle('d-none', entradas[0].isIntersecting);
+            }, { threshold: 0.15 }).observe(seccion);
+        }
+    })();
+</script>
 
 </body>
 </html>

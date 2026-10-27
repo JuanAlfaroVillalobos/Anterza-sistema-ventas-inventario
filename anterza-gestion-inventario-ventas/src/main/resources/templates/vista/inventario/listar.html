@@ -53,10 +53,10 @@
                     <h4 class="fw-bold mb-1">
                         <i class="bi bi-box-seam me-2 text-primary"></i>Gestión de Inventario
                     </h4>
-                    <small class="text-muted">Registro, consulta y control de stock de productos</small>
+                    <small class="text-muted">Consulta y control de stock. Los productos nuevos se crean al registrar una compra.</small>
                 </div>
-                <a th:href="@{/inventario/nuevo}" class="btn btn-teal">
-                    <i class="bi bi-plus-lg me-1"></i> Nuevo Producto
+                <a th:href="@{/compras}" class="btn btn-teal">
+                    <i class="bi bi-cart-plus me-1"></i> Registrar Compra
                 </a>
             </div>
 
@@ -186,21 +186,10 @@
                                     </td>
                                     <td class="text-center pe-3">
                                         <div class="btn-group btn-group-sm">
-                                            <a th:href="@{/inventario/editar/{id}(id=${p.idProducto})}"
-                                               class="btn btn-outline-primary" title="Editar">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
                                             <a th:href="@{/inventario/lotes/{id}(id=${p.idProducto})}"
                                                class="btn btn-outline-info" title="Ver Lotes">
                                                 <i class="bi bi-boxes"></i>
                                             </a>
-                                            <form th:action="@{/inventario/desactivar/{id}(id=${p.idProducto})}"
-                                                  method="post" class="d-inline"
-                                                  onsubmit="return confirm('¿Desactivar este producto?')">
-                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Desactivar">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
                                         </div>
                                     </td>
                                 </tr>

@@ -31,12 +31,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
             </div>
             <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
-            <div th:if="${#lists.isEmpty(proveedores) or #lists.isEmpty(empleados) or #lists.isEmpty(productos)}"
+            <div th:if="${#lists.isEmpty(proveedores) or #lists.isEmpty(empleados)}"
                  class="alert alert-warning" role="alert">
-                Para registrar una compra necesitas al menos un proveedor, un empleado y un producto disponibles.
+                Para registrar una compra necesitas al menos un proveedor y un empleado disponibles.
             </div>
 
-            <form method="post" th:action="@{/compras/registrar}" class="row g-4">
+            <form id="formCompra" method="post" th:action="@{/compras/registrar}" class="row g-4 needs-validation" novalidate>
                 <section class="col-xl-8">
                     <div class="card compra-card shadow-sm mb-4">
                         <div class="card-header px-4 py-3 fw-semibold"><i class="bi bi-receipt me-2 text-info"></i>Datos del comprobante</div>
@@ -71,12 +71,74 @@
                         <div class="card-header px-4 py-3 fw-semibold"><i class="bi bi-box-seam me-2 text-info"></i>Producto recibido</div>
                         <div class="card-body p-4">
                             <div class="row g-3">
-                                <div class="col-md-12">
+                                <!-- Producto existente o nuevo -->
+                                <div class="col-12">
+                                    <div class="btn-group w-100" role="group" aria-label="Tipo de producto">
+                                        <input type="radio" class="btn-check" name="tipoProducto" id="tipoExistente"
+                                               value="EXISTENTE" autocomplete="off" checked>
+                                        <label class="btn btn-outline-secondary" for="tipoExistente">
+                                            <i class="bi bi-box-seam me-1"></i>Producto existente
+                                        </label>
+                                        <input type="radio" class="btn-check" name="tipoProducto" id="tipoNuevo"
+                                               value="NUEVO" autocomplete="off">
+                                        <label class="btn btn-outline-secondary" for="tipoNuevo">
+                                            <i class="bi bi-plus-circle me-1"></i>Producto nuevo
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Producto existente -->
+                                <div class="col-12" id="bloqueExistente">
                                     <label for="productoId" class="form-label">Producto</label>
                                     <select id="productoId" name="productoId" class="form-select" required>
                                         <option value="">Selecciona un producto</option>
-                                        <option th:each="p : ${productos}" th:value="${p.idProducto}" th:text="${p.nombre}"></option>
+                                        <option th:each="p : ${productos}" th:value="${p.idProducto}"
+                                                th:attr="data-costo=${costosPorProducto[p.idProducto]}, data-precio=${p.precioVenta}"
+                                                th:text="|${p.codigo} - ${p.nombre}|"></option>
                                     </select>
+                                </div>
+
+                                <!-- Producto nuevo: se crea junto con la compra -->
+                                <div class="col-12 d-none" id="bloqueNuevo">
+                                    <div class="border rounded-3 p-3 bg-light">
+                                        <div class="small text-muted mb-3">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            El producto se crea al registrar la compra y aparece en el inventario con este lote.
+                                        </div>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label for="nuevoCodigo" class="form-label">Código del producto</label>
+                                                <input id="nuevoCodigo" class="form-control bg-light fw-semibold" readonly
+                                                       th:value="${siguienteCodigo}" value="PR-000"
+                                                       title="Se genera automáticamente" aria-describedby="ayudaCodigo">
+                                                <div id="ayudaCodigo" class="form-text">
+                                                    <i class="bi bi-lock me-1"></i>Se genera automáticamente
+                                                </div>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label for="nuevoNombre" class="form-label">Nombre</label>
+                                                <input id="nuevoNombre" name="nuevoNombre" class="form-control" maxlength="80"
+                                                       placeholder="Paracetamol 500 mg x 10 tab" disabled>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="nuevaCategoriaId" class="form-label">Categoría</label>
+                                                <select id="nuevaCategoriaId" name="nuevaCategoriaId" class="form-select" disabled>
+                                                    <option value="">Selecciona</option>
+                                                    <option th:each="c : ${categorias}" th:value="${c.idCategoria}" th:text="${c.nombre}"></option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="nuevoPrecioVenta" class="form-label">Precio de venta (S/)</label>
+                                                <input id="nuevoPrecioVenta" name="nuevoPrecioVenta" type="number" min="0.01"
+                                                       max="999999.99" step="0.01" class="form-control" disabled>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="nuevoStockMinimo" class="form-label">Stock mínimo</label>
+                                                <input id="nuevoStockMinimo" name="nuevoStockMinimo" type="number" min="0"
+                                                       value="10" class="form-control" disabled>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="codigoLote" class="form-label">Código de lote</label>
@@ -88,11 +150,28 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="cantidad" class="form-label">Cantidad recibida</label>
-                                    <input id="cantidad" name="cantidad" type="number" min="1" value="1" class="form-control" required>
+                                    <input id="cantidad" name="cantidad" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="6"
+                                           autocomplete="off" placeholder="Ej: 24" class="form-control" required>
+                                    <div class="invalid-feedback">Ingrese una cantidad válida: solo números, mayor a 0.</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="costo" class="form-label">Costo unitario (S/)</label>
-                                    <input id="costo" name="costo" type="number" min="0.01" max="999999.99" step="0.01" value="1.00" class="form-control" required>
+                                    <input id="costo" name="costo" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" maxlength="9"
+                                           autocomplete="off" placeholder="Ej: 4.50" class="form-control" required>
+                                    <div class="invalid-feedback">Ingrese un costo válido: solo números, mayor a 0 (máximo 2 decimales).</div>
+                                    <div class="form-text" id="ayudaCosto"></div>
+                                </div>
+                                <!-- Precio de venta del producto existente: viene de la base de datos y se puede modificar -->
+                                <div class="col-md-6" id="bloquePrecioVenta">
+                                    <label for="precioVentaActual" class="form-label">Precio de venta (S/)</label>
+                                    <input id="precioVentaActual" name="precioVenta" type="text" inputmode="decimal"
+                                           pattern="[0-9]+(\.[0-9]{1,2})?" maxlength="9" autocomplete="off"
+                                           class="form-control" placeholder="Seleccione un producto"
+                                           aria-describedby="ayudaPrecioVenta" required>
+                                    <div class="invalid-feedback">Ingrese un precio válido: solo números, mayor a 0 (máximo 2 decimales).</div>
+                                    <div id="ayudaPrecioVenta" class="form-text">
+                                        Precio actual del producto. Si lo modifica, se actualiza al registrar la compra.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -109,7 +188,7 @@
                                 <strong>Total</strong><span class="total-compra">S/ <span id="total">1.00</span></span>
                             </div>
                             <button type="submit" class="btn btn-teal w-100 py-2"
-                                    th:disabled="${#lists.isEmpty(proveedores) or #lists.isEmpty(empleados) or #lists.isEmpty(productos)}">
+                                    th:disabled="${#lists.isEmpty(proveedores) or #lists.isEmpty(empleados)}">
                                 <i class="bi bi-check-circle me-2"></i>Registrar Compra
                             </button>
                             <a th:href="@{/inventario}" class="btn btn-outline-secondary w-100 mt-2">Cancelar</a>
@@ -123,6 +202,7 @@
     <script>
         const cantidad = document.getElementById('cantidad');
         const costo = document.getElementById('costo');
+        const precioVentaActual = document.getElementById('precioVentaActual');
         function actualizarResumen() {
             const unidades = Number(cantidad.value) || 0;
             const precio = Number(costo.value) || 0;
@@ -130,9 +210,132 @@
             document.getElementById('costoResumen').textContent = 'S/ ' + precio.toFixed(2);
             document.getElementById('total').textContent = (unidades * precio).toFixed(2);
         }
-        cantidad.addEventListener('input', actualizarResumen);
-        costo.addEventListener('input', actualizarResumen);
+        // Cantidad: solo digitos. Costo: solo digitos y un punto con hasta 2 decimales.
+        function validarNumeros() {
+            cantidad.value = cantidad.value.replace(/[^0-9]/g, '');
+            let c = costo.value.replace(/[^0-9.]/g, '');
+            const partes = c.split('.');
+            if (partes.length > 1) {
+                c = partes[0] + '.' + partes.slice(1).join('').slice(0, 2);
+            }
+            costo.value = c;
+            let pv = precioVentaActual.value.replace(/[^0-9.]/g, '');
+            const partesPv = pv.split('.');
+            if (partesPv.length > 1) {
+                pv = partesPv[0] + '.' + partesPv.slice(1).join('').slice(0, 2);
+            }
+            precioVentaActual.value = pv;
+            precioVentaActual.setCustomValidity(
+                precioVentaActual.disabled || Number(pv) > 0 ? '' : 'El precio de venta debe ser mayor a 0');
+            cantidad.setCustomValidity(Number(cantidad.value) >= 1 ? '' : 'La cantidad debe ser mayor a 0');
+            costo.setCustomValidity(Number(costo.value) > 0 ? '' : 'El costo debe ser mayor a 0');
+        }
+        cantidad.addEventListener('input', () => { validarNumeros(); actualizarResumen(); });
+        costo.addEventListener('input', () => { validarNumeros(); actualizarResumen(); });
+
+        // No se envia el formulario si hay datos invalidos: se marcan los campos en rojo
+        const formCompra = document.getElementById('formCompra');
+        formCompra.addEventListener('submit', event => {
+            validarNumeros();
+            if (!formCompra.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            formCompra.classList.add('was-validated');
+        });
+
+        // Producto existente / nuevo: se muestra un bloque y el otro se deshabilita (no se envia)
+        const bloqueExistente = document.getElementById('bloqueExistente');
+        const bloqueNuevo = document.getElementById('bloqueNuevo');
+        const camposNuevo = [
+            { el: document.getElementById('nuevoNombre'), obligatorio: true },
+            { el: document.getElementById('nuevaCategoriaId'), obligatorio: true },
+            { el: document.getElementById('nuevoPrecioVenta'), obligatorio: true },
+            { el: document.getElementById('nuevoStockMinimo'), obligatorio: true }
+        ];
+        const productoId = document.getElementById('productoId');
+
+        // Costo sugerido: producto existente trae su ultimo costo de compra; producto nuevo empieza en 0
+        const ayudaCosto = document.getElementById('ayudaCosto');
+        function sugerirCosto() {
+            if (document.getElementById('tipoNuevo').checked) {
+                costo.value = '0';
+                ayudaCosto.textContent = 'Producto nuevo: ingrese el costo de compra.';
+            } else {
+                const opcion = productoId.options[productoId.selectedIndex];
+                const ultimo = opcion ? opcion.dataset.costo : '';
+                if (ultimo) {
+                    costo.value = Number(ultimo).toFixed(2);
+                    ayudaCosto.textContent = 'Último costo de compra de este producto. Puede modificarlo.';
+                } else {
+                    costo.value = '';
+                    ayudaCosto.textContent = '';
+                }
+            }
+            validarNumeros();
+            actualizarResumen();
+        }
+        // Precio de venta del producto existente (de la base de datos)
+        const bloquePrecioVenta = document.getElementById('bloquePrecioVenta');
+        function mostrarPrecioVenta() {
+            const opcion = productoId.options[productoId.selectedIndex];
+            const precio = opcion ? opcion.dataset.precio : '';
+            precioVentaActual.value = precio ? Number(precio).toFixed(2) : '';
+        }
+        productoId.addEventListener('change', () => { sugerirCosto(); mostrarPrecioVenta(); validarNumeros(); });
+        precioVentaActual.addEventListener('input', validarNumeros);
+
+        function cambiarTipoProducto() {
+            const nuevo = document.getElementById('tipoNuevo').checked;
+            bloqueExistente.classList.toggle('d-none', nuevo);
+            bloqueNuevo.classList.toggle('d-none', !nuevo);
+            bloquePrecioVenta.classList.toggle('d-none', nuevo);
+            precioVentaActual.disabled = nuevo;
+            precioVentaActual.required = !nuevo;
+            productoId.disabled = nuevo;
+            productoId.required = !nuevo;
+            camposNuevo.forEach(c => {
+                c.el.disabled = !nuevo;
+                c.el.required = nuevo && c.obligatorio;
+            });
+        }
+        document.querySelectorAll('input[name="tipoProducto"]').forEach(r => r.addEventListener('change', () => {
+            cambiarTipoProducto();
+            sugerirCosto();
+        }));
+        cambiarTipoProducto();
+        validarNumeros();
         actualizarResumen();
+    </script>
+    <script th:inline="javascript">
+        // Si hubo un error, se devuelve lo que el usuario ya habia escrito y se marcan en rojo solo los campos con error
+        const datosPrevios = /*[[${form}]]*/ {};
+        const camposConError = /*[[${camposError}]]*/ [];
+        (function restaurarFormulario() {
+            if (!datosPrevios || Object.keys(datosPrevios).length === 0) { return; }
+            if (datosPrevios.tipoProducto === 'NUEVO') {
+                document.getElementById('tipoNuevo').checked = true;
+                cambiarTipoProducto();
+            }
+            Object.keys(datosPrevios).forEach(nombre => {
+                if (nombre === 'tipoProducto') { return; }
+                const campo = formCompra.querySelector('[name="' + nombre + '"]');
+                if (campo && !campo.disabled) { campo.value = datosPrevios[nombre]; }
+            });
+            validarNumeros();
+            actualizarResumen();
+            camposConError.forEach(id => {
+                const campo = document.getElementById(id);
+                if (campo) {
+                    campo.classList.add('is-invalid');
+                    const quitar = () => campo.classList.remove('is-invalid');
+                    campo.addEventListener('input', quitar);
+                    campo.addEventListener('change', quitar);
+                }
+            });
+            const primero = document.querySelector('.is-invalid');
+            if (primero) { primero.scrollIntoView({ block: 'center' }); primero.focus(); }
+        })();
     </script>
 </body>
 </html>
