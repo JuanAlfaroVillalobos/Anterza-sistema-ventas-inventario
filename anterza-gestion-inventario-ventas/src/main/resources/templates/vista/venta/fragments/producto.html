@@ -24,29 +24,31 @@
                   bajo=${p.stock() > 0 and p.stock() * 2 > p.stockMinimo() and p.stock() <= p.stockMinimo()}">
         <article class="card h-100 border-0 shadow-sm" th:classappend="${agotado} ? 'opacity-50'">
 
-            <!-- Foto: static/img/productos/CODIGO.jpg. Si no existe, queda el ícono. -->
-            <div class="ratio ratio-16x9 bg-light rounded-top overflow-hidden">
-                <div class="d-flex align-items-center justify-content-center text-secondary fs-1">
-                    <i class="bi bi-capsule" aria-hidden="true"></i>
-                    <img th:src="@{/img/productos/{codigo}.jpg(codigo=${p.codigo()})}" alt="" loading="lazy"
-                         class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover bg-white">
-                </div>
-            </div>
-
             <div class="card-body d-flex flex-column p-3">
-                <h6 class="card-title fw-semibold mb-1" th:text="${p.nombre()}" th:title="${p.nombre()}">Nombre</h6>
-                <div class="text-muted small mb-2" th:text="${p.codigo() + ' · ' + p.categoria()}">COD · Categoría</div>
+                <!-- Categoría y código -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-light text-secondary border fw-normal" th:text="${p.categoria()}">Categoría</span>
+                    <span class="text-muted small" th:text="${p.codigo()}">COD</span>
+                </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-auto">
-                    <span class="small">
-                        <strong th:unless="${agotado}" th:text="|${p.stock()} u.|">10 u.</strong>
+                <!-- Nombre del producto -->
+                <h6 class="card-title fw-semibold mb-3" th:text="${p.nombre()}" th:title="${p.nombre()}">Nombre</h6>
+
+                <!-- Precio -->
+                <div class="fw-bold fs-4 mb-2"
+                     th:text="${'S/ ' + #numbers.formatDecimal(p.precioVenta(), 1, 'POINT', 2, 'POINT')}">S/ 0.00</div>
+
+                <!-- Stock disponible -->
+                <div class="d-flex justify-content-between align-items-center mt-auto small">
+                    <span class="text-muted">
+                        Stock: <strong class="text-dark" th:text="|${p.stock()} u.|">10 u.</strong>
+                    </span>
+                    <span>
                         <span class="badge bg-secondary fw-normal" th:if="${agotado}">Agotado</span>
                         <span class="badge bg-danger fw-normal" th:if="${critico}">Crítico</span>
                         <span class="badge bg-warning text-dark fw-normal" th:if="${bajo}">Bajo stock</span>
-                        <span class="badge bg-success fw-normal" th:if="${!agotado and !critico and !bajo}">Stock bueno</span>
+                        <span class="badge bg-success fw-normal" th:if="${!agotado and !critico and !bajo}">Disponible</span>
                     </span>
-                    <span class="fw-bold fs-5"
-                          th:text="${'S/ ' + #numbers.formatDecimal(p.precioVenta(), 1, 'POINT', 2, 'POINT')}">S/ 0.00</span>
                 </div>
 
                 <!-- Los data-* son los que lee venta.js para armar la canasta -->

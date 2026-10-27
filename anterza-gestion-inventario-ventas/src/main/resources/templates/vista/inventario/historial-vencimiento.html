@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Historial de Vencimiento - FarmaControl</title>
+    <th:block th:replace="~{fragments/layout :: recursos}" />
+    <style>
+        .badge-vencido { background: #fee2e2; color: #991b1b; }
+        .badge-proximo { background: #fef3c7; color: #92400e; }
+        .table > thead { background: #f1f5f9; }
+    </style>
+</head>
+<body>
+    <nav th:replace="~{fragments/layout :: sidebar('historial-vencimiento')}"></nav>
+
+    <div class="fc-main">
+        <div class="container-fluid py-4 px-4">
+
+            <div class="d-flex align-items-center mb-4">
+                <a th:href="@{/inventario}" class="btn btn-outline-secondary btn-sm me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h4 class="fw-bold mb-0">
+                        <i class="bi bi-clock-history me-2 text-warning"></i>Historial de Vencimiento
+                    </h4>
+                    <small class="text-muted">Alertas de lotes por vencer (3 meses o menos) que ya se mostraron en Inventario</small>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-3">Fecha de alerta</th>
+                                    <th>Producto</th>
+                                    <th>Lote</th>
+                                    <th>Vencimiento</th>
+                                    <th class="text-center pe-3">Situación al alertar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="a : ${alertas}">
+                                    <td class="ps-3" th:text="${#temporals.format(a.fechaAlerta, 'dd/MM/yyyy HH:mm')}"></td>
+                                    <td class="fw-semibold" th:text="${a.producto.nombre}"></td>
+                                    <td th:text="${a.lote.codigoLote}"></td>
+                                    <td th:text="${#temporals.format(a.lote.fechaVencimiento, 'dd/MM/yyyy')}"></td>
+                                    <td class="text-center pe-3">
+                                        <span th:if="${a.valor < 0}" class="badge badge-vencido"
+                                              th:text="|Vencido hace ${-a.valor} días|"></span>
+                                        <span th:if="${a.valor == 0}" class="badge badge-vencido">Vencía ese día</span>
+                                        <span th:if="${a.valor > 0}" class="badge badge-proximo"
+                                              th:text="|Faltaban ${a.valor} días|"></span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(alertas)}">
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                        Aún no hay alertas de vencimiento en el historial.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/layout :: scripts}" />
+</body>
+</html>

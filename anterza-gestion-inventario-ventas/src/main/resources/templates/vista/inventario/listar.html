@@ -25,6 +25,8 @@
         .bg-rose   { background: linear-gradient(135deg, #e11d48, #be123c); }
         .badge-stock-ok  { background: #d1fae5; color: #065f46; }
         .badge-stock-low { background: #fee2e2; color: #991b1b; }
+        .badge-vencido   { background: #fee2e2; color: #991b1b; }
+        .badge-proximo   { background: #fef3c7; color: #92400e; }
         .table > thead { background: #f1f5f9; }
         .btn-teal {
             background: #1a838b; color: #fff; border: none;
@@ -58,7 +60,7 @@
                 </a>
             </div>
 
-            <!-- Tarjetas de resumen (las alertas se acceden desde aquí) -->
+            <!-- Tarjetas de resumen (el historial de alertas se accede desde aquí) -->
             <div class="row g-3 mb-4">
                 <div class="col-md-4">
                     <div class="card card-stat bg-teal p-3">
@@ -72,7 +74,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <a th:href="@{/inventario/alertas/vencimiento}" class="text-decoration-none">
+                    <a th:href="@{/inventario/historial/vencimiento}" class="text-decoration-none">
                         <div class="card card-stat bg-amber p-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -85,7 +87,7 @@
                     </a>
                 </div>
                 <div class="col-md-4">
-                    <a th:href="@{/inventario/alertas/stock}" class="text-decoration-none">
+                    <a th:href="@{/inventario/historial/stock}" class="text-decoration-none">
                         <div class="card card-stat bg-rose p-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -217,6 +219,96 @@
         </div>
     </div>
 
+
+    <!-- Modal de alertas nuevas: aparece una sola vez por producto/lote -->
+    <div th:if="${!#lists.isEmpty(alertasVencimiento) or !#lists.isEmpty(alertasStock)}"
+         class="modal fade" id="modalAlertas" tabindex="-1" aria-labelledby="tituloAlertas" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-warning-subtle">
+                    <h5 class="modal-title fw-bold" id="tituloAlertas">
+                        <i class="bi bi-bell-fill me-2 text-warning"></i>Alertas de inventario
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+
+                    <!-- Vencimiento -->
+                    <div th:if="${!#lists.isEmpty(alertasVencimiento)}" class="mb-4">
+                        <h6 class="fw-semibold text-warning-emphasis">
+                            <i class="bi bi-clock-history me-1"></i>
+                            Lotes por vencer en 3 meses o menos
+                            <span class="badge bg-warning text-dark ms-1" th:text="${#lists.size(alertasVencimiento)}"></span>
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Lote</th>
+                                        <th>Vence</th>
+                                        <th class="text-center">Situación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="a : ${alertasVencimiento}">
+                                        <td th:text="${a.producto.nombre}"></td>
+                                        <td th:text="${a.lote.codigoLote}"></td>
+                                        <td th:text="${#temporals.format(a.lote.fechaVencimiento, 'dd/MM/yyyy')}"></td>
+                                        <td class="text-center">
+                                            <span th:if="${a.valor < 0}" class="badge badge-vencido"
+                                                  th:text="|Vencido hace ${-a.valor} días|"></span>
+                                            <span th:if="${a.valor == 0}" class="badge badge-vencido">Vence hoy</span>
+                                            <span th:if="${a.valor > 0}" class="badge badge-proximo"
+                                                  th:text="|Vence en ${a.valor} días|"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Stock bajo -->
+                    <div th:if="${!#lists.isEmpty(alertasStock)}">
+                        <h6 class="fw-semibold text-danger">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Productos con stock menor a 5
+                            <span class="badge bg-danger ms-1" th:text="${#lists.size(alertasStock)}"></span>
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Producto</th>
+                                        <th class="text-center">Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="a : ${alertasStock}">
+                                        <td th:text="${a.producto.codigo}"></td>
+                                        <td th:text="${a.producto.nombre}"></td>
+                                        <td class="text-center">
+                                            <span class="badge badge-stock-low rounded-pill" th:text="${a.valor}"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <small class="text-muted">Esta alerta no se vuelve a mostrar. Queda guardada en el historial.</small>
+                    <button type="button" class="btn btn-teal" data-bs-dismiss="modal">Entendido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <th:block th:replace="~{fragments/layout :: scripts}" />
+    <script th:if="${!#lists.isEmpty(alertasVencimiento) or !#lists.isEmpty(alertasStock)}">
+        new bootstrap.Modal(document.getElementById('modalAlertas')).show();
+    </script>
 </body>
 </html>

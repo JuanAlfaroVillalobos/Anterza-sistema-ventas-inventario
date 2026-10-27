@@ -11,7 +11,8 @@
         /* ---- Sidebar fijo (Figma: gradiente rojo oscuro) ---- */
         .fc-sidebar {
             position: fixed;
-            top: 0; left: 0;
+            top: 0;
+            left: 0;
             width: 250px;
             height: 100vh;
             background: linear-gradient(180deg, #1a838b 0%, #0e4c5c 100%);
@@ -21,27 +22,36 @@
             z-index: 1040;
             overflow-y: auto;
         }
+
         .fc-sidebar .nav-link {
-            color: rgba(255,255,255,.75);
+            color: rgba(255, 255, 255, .75);
             border-radius: .375rem;
             padding: .55rem .9rem;
             font-size: .875rem;
             transition: background .15s, color .15s;
         }
+
         .fc-sidebar .nav-link:hover,
         .fc-sidebar .nav-link.active {
-            background: rgba(255,255,255,.15);
+            background: rgba(255, 255, 255, .15);
             color: #fff;
         }
+
         /* ---- Contenido principal desplazado ---- */
         .fc-main {
             margin-left: 250px;
             min-height: 100vh;
             background: #f5f6fa;
         }
+
         @media (max-width: 991.98px) {
-            .fc-sidebar { width: 220px; }
-            .fc-main    { margin-left: 220px; }
+            .fc-sidebar {
+                width: 220px;
+            }
+
+            .fc-main {
+                margin-left: 220px;
+            }
         }
     </style>
 </th:block>
@@ -61,31 +71,29 @@
     <!-- Menú -->
     <ul class="nav flex-column gap-1">
         <li class="nav-item">
-            <a class="nav-link" href="#">
+            <a class="nav-link" th:classappend="${seccion == 'compra' ? 'active' : ''}" th:href="@{/compras}">
                 <i class="bi bi-cart-plus me-2"></i> Registrar Compra
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" th:classappend="${seccion == 'inventario' ? 'active' : ''}"
-               th:href="@{/inventario}">
+            <a class="nav-link" th:classappend="${seccion == 'inventario' ? 'active' : ''}" th:href="@{/inventario}">
                 <i class="bi bi-box-seam me-2"></i> Inventario
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" th:classappend="${seccion == 'alertas-vencimiento' ? 'active' : ''}"
-               th:href="@{/inventario/alertas/vencimiento}">
-                <i class="bi bi-clock-history me-2"></i> Alertas Vencimiento
+            <a class="nav-link" th:classappend="${seccion == 'historial-vencimiento' ? 'active' : ''}"
+                th:href="@{/inventario/historial/vencimiento}">
+                <i class="bi bi-clock-history me-2"></i> Historial Vencimiento
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" th:classappend="${seccion == 'alertas-stock' ? 'active' : ''}"
-               th:href="@{/inventario/alertas/stock}">
-                <i class="bi bi-exclamation-triangle me-2"></i> Alertas Stock
+            <a class="nav-link" th:classappend="${seccion == 'historial-stock' ? 'active' : ''}"
+                th:href="@{/inventario/historial/stock}">
+                <i class="bi bi-exclamation-triangle me-2"></i> Historial Stock
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" th:classappend="${seccion == 'venta' ? 'active' : ''}"
-       th:href="@{/ventas/nueva}">
+            <a class="nav-link" th:classappend="${seccion == 'venta' ? 'active' : ''}" th:href="@{/ventas/nueva}">
                 <i class="bi bi-receipt me-2"></i> Registrar Venta
             </a>
         </li>
@@ -98,7 +106,7 @@
     <hr class="border-light opacity-25 my-2">
     <div class="d-flex align-items-center gap-2 px-2 pb-2">
         <div class="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center"
-             style="width:36px;height:36px;">
+            style="width:36px;height:36px;">
             <i class="bi bi-person-fill text-white"></i>
         </div>
         <div>

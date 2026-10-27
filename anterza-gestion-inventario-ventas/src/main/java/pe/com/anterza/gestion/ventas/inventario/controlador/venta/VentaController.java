@@ -43,6 +43,6 @@ public class VentaController {
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "Categoría no válida.") Integer categoriaId,
             Model model) {
         model.addAttribute("productos", ventaService.buscarProductos(q, categoriaId));
-        return "vista/venta/fragments/productos :: lista";
+        return "vista/venta/fragments/producto :: lista";
     }
 }

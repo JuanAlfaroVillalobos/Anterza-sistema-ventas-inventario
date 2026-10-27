@@ -16,6 +16,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.validation.Valid;
 import pe.com.anterza.gestion.ventas.inventario.modelo.Lote;
 import pe.com.anterza.gestion.ventas.inventario.modelo.Producto;
+import pe.com.anterza.gestion.ventas.inventario.servicio.inventario.AlertaInventarioServicio;
+import pe.com.anterza.gestion.ventas.inventario.servicio.inventario.AlertaInventarioServicio.AlertasNuevas;
 import pe.com.anterza.gestion.ventas.inventario.servicio.inventario.InventarioServicio;
 
 /**
@@ -27,9 +29,12 @@ import pe.com.anterza.gestion.ventas.inventario.servicio.inventario.InventarioSe
 public class InventarioControlador {
 
     private final InventarioServicio servicio;
+    private final AlertaInventarioServicio alertaServicio;
 
-    public InventarioControlador(InventarioServicio servicio) {
+    public InventarioControlador(InventarioServicio servicio,
+                                 AlertaInventarioServicio alertaServicio) {
         this.servicio = servicio;
+        this.alertaServicio = alertaServicio;
     }
 
     /* ====================== LISTADO PRINCIPAL ====================== */
@@ -58,6 +63,11 @@ public class InventarioControlador {
         model.addAttribute("totalProductos", servicio.contarProductosActivos());
         model.addAttribute("lotesProxVencer", servicio.contarLotesProximosAVencer());
         model.addAttribute("productosStockBajo", servicio.contarProductosStockBajo());
+
+        // Alertas nuevas (se muestran en un modal una sola vez y pasan al historial)
+        AlertasNuevas alertas = alertaServicio.generarNuevas();
+        model.addAttribute("alertasVencimiento", alertas.vencimiento());
+        model.addAttribute("alertasStock", alertas.stock());
 
         return "vista/inventario/listar";
     }
@@ -151,22 +161,17 @@ public class InventarioControlador {
                 });
     }
 
-    /* ====================== ALERTAS DE VENCIMIENTO ====================== */
+    /* ====================== HISTORIAL DE ALERTAS ====================== */
 
-    @GetMapping("/alertas/vencimiento")
-    public String alertasVencimiento(@RequestParam(defaultValue = "30") int dias,
-                                     Model model) {
-        model.addAttribute("lotesProximos", servicio.lotesProximosAVencer(dias));
-        model.addAttribute("lotesVencidos", servicio.lotesVencidos());
-        model.addAttribute("diasSeleccionados", dias);
-        return "vista/inventario/alertas-vencimiento";
+    @GetMapping("/historial/vencimiento")
+    public String historialVencimiento(Model model) {
+        model.addAttribute("alertas", alertaServicio.historialVencimiento());
+        return "vista/inventario/historial-vencimiento";
     }
 
-    /* ====================== ALERTAS DE STOCK BAJO ====================== */
-
-    @GetMapping("/alertas/stock")
-    public String alertasStock(Model model) {
-        model.addAttribute("productos", servicio.productosConStockBajo());
-        return "vista/inventario/alertas-stock";
+    @GetMapping("/historial/stock")
+    public String historialStock(Model model) {
+        model.addAttribute("alertas", alertaServicio.historialStock());
+        return "vista/inventario/historial-stock";
     }
 }
