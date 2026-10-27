@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lotes - FarmaControl</title>
+    <th:block th:replace="~{fragments/layout :: recursos}" />
+    <style>
+        .btn-teal { background: #1a838b; color: #fff; border: none; }
+        .btn-teal:hover { background: #0e4c5c; color: #fff; }
+        .badge-vencido   { background: #fee2e2; color: #991b1b; }
+        .badge-proximo   { background: #fef3c7; color: #92400e; }
+        .badge-vigente   { background: #d1fae5; color: #065f46; }
+        .table > thead   { background: #f1f5f9; }
+        .info-card {
+            background: linear-gradient(135deg, #1a838b, #0e4c5c);
+            color: #fff; border-radius: .75rem;
+        }
+    </style>
+</head>
+<body>
+    <nav th:replace="~{fragments/layout :: sidebar('inventario')}"></nav>
+
+    <div class="fc-main">
+        <div class="container-fluid py-4 px-4">
+
+            <!-- Encabezado -->
+            <div class="d-flex align-items-center mb-4">
+                <a th:href="@{/inventario}" class="btn btn-outline-secondary btn-sm me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h4 class="fw-bold mb-0">
+                        <i class="bi bi-boxes me-2 text-primary"></i>Lotes del Producto
+                    </h4>
+                    <small class="text-muted">Trazabilidad por lote y fecha de vencimiento</small>
+                </div>
+            </div>
+
+            <!-- Info del producto -->
+            <div class="card info-card p-3 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <small class="opacity-75">Código</small>
+                        <div class="fw-bold" th:text="${producto.codigo}"></div>
+                    </div>
+                    <div class="col-md-5">
+                        <small class="opacity-75">Producto</small>
+                        <div class="fw-bold" th:text="${producto.nombre}"></div>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="opacity-75">Categoría</small>
+                        <div class="fw-bold" th:text="${producto.categoria.nombre}"></div>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <small class="opacity-75">Stock Total</small>
+                        <h4 class="fw-bold mb-0" th:text="${producto.stockActual != null ? producto.stockActual : 0}"></h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de lotes -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-3">Código Lote</th>
+                                    <th>Fecha Vencimiento</th>
+                                    <th class="text-center">Stock Disponible</th>
+                                    <th class="text-end">Costo Unitario</th>
+                                    <th class="text-center pe-3">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="l : ${lotes}">
+                                    <td class="ps-3 fw-semibold" th:text="${l.codigoLote}"></td>
+                                    <td th:text="${#temporals.format(l.fechaVencimiento, 'dd/MM/yyyy')}"></td>
+                                    <td class="text-center fw-bold" th:text="${l.cantidad}"></td>
+                                    <td class="text-end" th:text="'S/ ' + ${#numbers.formatDecimal(l.costoUnitario, 1, 2)}"></td>
+                                    <td class="text-center pe-3">
+                                        <span class="badge rounded-pill badge-vencido"
+                                              th:if="${l.fechaVencimiento.isBefore(T(java.time.LocalDate).now())}">
+                                            <i class="bi bi-x-circle me-1"></i>Vencido
+                                        </span>
+                                        <span class="badge rounded-pill badge-proximo"
+                                              th:if="${!l.fechaVencimiento.isBefore(T(java.time.LocalDate).now()) && l.fechaVencimiento.isBefore(T(java.time.LocalDate).now().plusDays(30))}">
+                                            <i class="bi bi-clock me-1"></i>Próximo
+                                        </span>
+                                        <span class="badge rounded-pill badge-vigente"
+                                              th:if="${!l.fechaVencimiento.isBefore(T(java.time.LocalDate).now().plusDays(30))}">
+                                            <i class="bi bi-check-circle me-1"></i>Vigente
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(lotes)}">
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                        Este producto no tiene lotes registrados.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/layout :: scripts}" />
+</body>
+</html>

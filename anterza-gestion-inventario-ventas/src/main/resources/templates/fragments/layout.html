@@ -68,7 +68,19 @@
         <li class="nav-item">
             <a class="nav-link" th:classappend="${seccion == 'inventario' ? 'active' : ''}"
                th:href="@{/inventario}">
-                <i class="bi bi-box-seam me-2"></i> Ingreso Inventario
+                <i class="bi bi-box-seam me-2"></i> Inventario
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${seccion == 'alertas-vencimiento' ? 'active' : ''}"
+               th:href="@{/inventario/alertas/vencimiento}">
+                <i class="bi bi-clock-history me-2"></i> Alertas Vencimiento
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${seccion == 'alertas-stock' ? 'active' : ''}"
+               th:href="@{/inventario/alertas/stock}">
+                <i class="bi bi-exclamation-triangle me-2"></i> Alertas Stock
             </a>
         </li>
         <li class="nav-item">
